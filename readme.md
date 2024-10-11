@@ -1,4 +1,4 @@
-This application allows for application security practitioners to more easily leverage Large Language Models (LLMs) to accelerate a variety of activities such as threat modeling, analysis of results from static code testing (SAST) or dynamic testing (DAST), etc.
+The GenAI4DSO application allows for application security practitioners to more easily leverage Large Language Models (LLMs) to accelerate a variety of activities such as threat modeling, analysis of results from static code testing (SAST) or dynamic testing (DAST), etc.
 
 The application is based on the Stride GPT project: 
 STRIDE GPT is an AI-powered threat modelling tool that leverages Large Language Models (LLMs) to generate threat models and attack trees for a given application based on the STRIDE methodology. Users provide application details, such as the application type, authentication methods, and whether the application is internet-facing or processes sensitive data. The model then generates its output based on the provided information.
