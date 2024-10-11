@@ -359,8 +359,8 @@ with st.sidebar:
 st.sidebar.header("About")
 
 with st.sidebar:
-# Add "Example Application Description" section to the sidebar
-st.sidebar.header("Example Application Description")
+    # Add "Example Application Description" section to the sidebar
+    st.sidebar.header("Example Application Description")
 
 with st.sidebar:
     st.markdown(
