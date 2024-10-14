@@ -182,7 +182,7 @@ load_env_variables()
 # ------------------ Streamlit UI Configuration ------------------ #
 
 st.set_page_config(
-    page_title="STRIDE GPT",
+    page_title="GenAI 4 DSO",
     page_icon=":shield:",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -207,9 +207,11 @@ with st.sidebar:
     if model_provider == "OpenAI API":
         st.markdown(
         """
-    1. Enter your [OpenAI API key](https://platform.openai.com/account/api-keys) and chosen model below 🔑
-    2. Provide details of the application that you would like to threat model  📝
-    3. Generate a threat list, attack tree and/or mitigating controls for your application 🚀
+    1. Enter your [OpenAI API key](https://platform.openai.com/account/api-keys) and chosen model below
+    2. Choose the Activity you would like to perform.
+    3. For Threat Modeling: Provide details of the application that you would like to threat model 
+    3. Generate a threat list, attack tree and/or mitigating controls for your application
+    4. For AST results analysis, enter the scan results along with the application details.
     """
     )
         # Add OpenAI API key input field to the sidebar
@@ -233,9 +235,9 @@ with st.sidebar:
     if model_provider == "Azure OpenAI Service":
         st.markdown(
         """
-    1. Enter your Azure OpenAI API key, endpoint and deployment name below 🔑
-    2. Provide details of the application that you would like to threat model  📝
-    3. Generate a threat list, attack tree and/or mitigating controls for your application 🚀
+    1. Enter your Azure OpenAI API key, endpoint and deployment name below
+    2. Provide details of the application that you would like to threat model
+    3. Generate a threat list, attack tree and/or mitigating controls for your application
     """
     )
 
@@ -415,7 +417,7 @@ with st.sidebar:
 
 # ------------------ Main App UI ------------------ #
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Threat Model", "Attack Tree", "Mitigations", "DREAD", "Test Cases"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Threat Model", "Attack Tree", "Mitigations", "DREAD", "AST Analysis"])
 
 with tab1:
     st.markdown("""
@@ -555,6 +557,7 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
 
                     # Save the threat model to the session state for later use in mitigations
                     st.session_state['threat_model'] = threat_model
+                    attack_tree_submit_button['threat_model'] = threat_model
                     break  # Exit the loop if successful
                 except Exception as e:
                     retry_count += 1
@@ -580,7 +583,7 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
        )
 
 # If the submit button is clicked and the user has not provided an application description
-if threat_model_submit_button and not st.session_state.get('app_input'):
+if threat_model_submit_button and not dread_submit_button.get('app_input'):
     st.error("Please enter your application details before submitting.")
 
 
@@ -606,8 +609,8 @@ vulnerabilities and prioritising mitigation efforts.
         attack_tree_submit_button = st.button(label="Generate Attack Tree")
         
         # If the Generate Attack Tree button is clicked and the user has provided an application description
-        if attack_tree_submit_button and st.session_state.get('app_input'):
-            app_input = st.session_state.get('app_input')
+        if attack_tree_submit_button and attack_tree_submit_button.get('app_input'):
+            app_input = dread_submit_button.get('app_input')
             # Generate the prompt using the create_attack_tree_prompt function
             attack_tree_prompt = create_attack_tree_prompt(app_type, authentication, internet_facing, sensitive_data, app_input)
 
@@ -671,4 +674,64 @@ with tab3:
 Use this tab to generate potential mitigations for the threats identified in the threat model. Mitigations are security controls or
 countermeasures that can help reduce the likelihood or impact of a security threat. The generated mitigations can be used to enhance
 the security posture of the application and protect against potential attacks.
+""")
+
+# ------------------ DREAD Generation ------------------ #
+
+with tab4:
+    st.markdown("""
+Use this tab to Generate risk scores for the identified threates based on the DREAD model, which considers:
+Damage – how bad would an attack be?
+Reproducibility – how easy is it to reproduce the attack?
+Exploitability – how much work is it to launch the attack?
+Affected users – how many people will be impacted?
+Discoverability – how easy is it to discover the threat?.
+""")
+
+        # Create a submit button for DREAD
+        dread_submit_button = st.button(label="Generate DREAD Risks")
+        
+        # If the Generate DREAD Risks button is clicked and the user has already run the threat model
+        if dread_submit_button and st.session_state['threat_model']:
+            dread_input = st.session_state['threat_model']
+            # Generate the prompt using the create_attack_tree_prompt function
+            dread_prompt = create_dread_assessment_prompt(dread_input)
+
+            # Show a spinner while generating DREAD assessment
+            with st.spinner("Generating DREAD assessment..."):
+                try:
+                    # Call the relevant get_attack_tree function with the generated prompt
+                    if model_provider == "Azure OpenAI Service":
+                        dread_results = get_dread_assessment_azure(azure_api_endpoint, azure_api_key, azure_api_version, azure_deployment_name, dread_prompt)
+                    elif model_provider == "OpenAI API":
+                        dread_results = get_dread_assessment(openai_api_key, selected_model, dread_prompt)
+                    elif model_provider == "Mistral API":
+                        dread_results = get_dread_assessment_mistral(mistral_api_key, mistral_model, dread_prompt)
+                    elif model_provider == "Ollama":
+                        dread_results = get_dread_assessment_ollama(ollama_model, dread_prompt)
+
+                    # Display the generated DREAD assessment
+                    st.write("DREAD Assessment:")
+                    dread_json = dread_results.get("Risk Assessment", [])
+                    # Convert the DREAD JSON to Markdown
+                    dread_markdown_output = json_to_markdown(dread_json)
+
+                    # Display the threat model in Markdown
+                    st.markdown(dread_markdown_output)
+
+                    st.download_button(
+                        label="Download DREAD Assessment",
+                        data=dread_results,
+                        file_name="DREAD_Assessment.md",
+                        mime="text/plain",
+                            help="Download the DREAD Assessment output."
+                        )
+
+# ------------------ AST Analysis Generation ------------------ #
+
+with tab5:
+    st.markdown("""
+Use this tab to help analyze the output of various Application Security Testing (AST) tools. These uploaded results should be in a standardized
+format such as SARIF for static code analysis, XML, JSON or YAML. This will analyze the results with the context of the application provided 
+previously to provide a summary of each vulnerability in non-technical terms, an adjusted risk score, and a proposed mitigation strategy.
 """)
