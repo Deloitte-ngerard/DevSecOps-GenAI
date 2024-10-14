@@ -712,9 +712,8 @@ Discoverability – how easy is it to discover the threat?.
 
                     # Display the generated DREAD assessment
                     st.write("DREAD Assessment:")
-                    dread_json = dread_results.get("Risk Assessment", [])
                     # Convert the DREAD JSON to Markdown
-                    dread_markdown_output = json_to_markdown(dread_json)
+                    dread_markdown_output = dread_json_to_markdown(dread_results)
 
                     # Display the threat model in Markdown
                     st.markdown(dread_markdown_output)
