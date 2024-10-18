@@ -532,6 +532,8 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
                 st.session_state.show_sensitivity_definitions = False
             tooltip_content1 = "<br>".join([f"<strong>{key}:</strong> {value}" for key, value in sensitivity_levels.items()])
             # Create the selectbox for sensitivity levels
+            col1, col2 = st.columns([100, 2])  # Adjust the ratio as needed
+
             sensitive_data = st.selectbox(
                 label="What is the highest sensitivity level of the data processed by the application?",
                 options=list(sensitivity_levels.keys()),
@@ -539,30 +541,22 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
             )
 
             load_css()
-            st.markdown(
-                f"""
-                <div class="tooltip">
-                    <span class="round-icon">i</span>
-                    <div class="tooltiptext">
-                        <b>Sensitivity Type:</b><br>
-                        {tooltip_content1}
+
+            with col2:
+                st.markdown(
+                    f"""
+                    <div class="tooltip">
+                        <span class="round-icon">i</span>
+                        <div class="tooltiptext">
+                            <b>Sensitivity Type:</b><br>
+                            {tooltip_content1}
+                        </div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+                    """,
+                    unsafe_allow_html=True
+                )
 
-
-            #     # Display the definition with a single color and reduced font size
-            # selected_definition = sensitivity_levels[sensitive_data]
-            # st.markdown(
-            #     f"<div style='color: black; background-color: lightyellow; padding: 5px; border-radius: 5px; font-size: 12px;'>{selected_definition}</div>",
-            #     unsafe_allow_html=True
-            # )
-
-            # Optionally, display the definition in a styled format
-
-
+            col1, col2 = st.columns([100, 2])  # Adjust the ratio as needed
             data_classes = {
                 f"Personally Identifiable Information (PII)": "Information that can be used to identify an individual, such as name, social security number, or email address.",
                 "Protected Health Information (PHI)": "Any information about health status, provision of healthcare, or payment for healthcare that can be linked to an individual.",
@@ -579,119 +573,21 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
             )
             tooltip_content = "<br>".join([f"<strong>{key}:</strong> {value}" for key, value in data_classes.items()])
             # Display a tooltip with available options
-            st.markdown(
-                f"""
-                <div class="tooltip">
-                    <span class="round-icon">i</span>
-                    <div class="tooltiptext">
-                        Data Classification:<br>
-                        {tooltip_content}
+            with col2:
+                st.markdown(
+                    f"""
+                    <div class="tooltip">
+                        <span class="round-icon">i</span>
+                        <div class="tooltiptext">
+                            Data Classification:<br>
+                            {tooltip_content}
+                        </div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True
+                    """,
+                    unsafe_allow_html=True
 
-                )
-            # # Display definitions for the selected data classes
-            # if selected_data_classes:
-            #     st.markdown("### Definitions:")
-            #     for item in selected_data_classes:
-            #         st.markdown(f"**{item}:** {data_classes[item]}")
-            # if selected_data_classes:
-            #     for item in selected_data_classes:
-            #         # Create a styled definition box
-            #         selected_definition = data_classes[item]
-            #         st.markdown(
-            #             # f"**<div style='font-size: 10px'>{item}:</div>** "
-            #             f"<div style='color: black; background-color: darkgrey; padding: 5px; border-radius: 5px; font-size: 12px;'>{item}:{selected_definition}</div>",
-            #             unsafe_allow_html=True
-            #         )
-
-            # # Initialize session state for the toggle
-            # if 'show_definitions' not in st.session_state:
-            #     st.session_state.show_definitions = False
-            #
-            # # Button to toggle the display of definitions
-            # if st.button("i",key="toggle_definition"):
-            #     st.session_state.show_definitions = not st.session_state.show_definitions
-            #
-            # if st.session_state.show_definitions and selected_data_classes:
-            #     # Start building the output string for the definitions
-            #     definitions_output = ""
-            #
-            #     # Accumulate definitions
-            #     for item in selected_data_classes:
-            #         selected_definition = data_classes[item]
-            #         definitions_output += f"<strong>{item}:</strong> {selected_definition}<br>"
-            #
-            #     # Show definitions in a styled container
-            #     st.markdown(
-            #         f"""
-            #         <div style='background-color: rgba(211, 211, 211, 0.8); color: black; text-align: left; border-radius: 5px; padding: 5px; font-size: 10px;'>
-            #             {definitions_output}
-            #         </div>
-            #         """,
-            #         unsafe_allow_html=True
-            #     )
-            # Start building the output string for the definitions
-            # definitions_output = ""
-            #
-            # # Accumulate definitions
-            # for item in selected_data_classes:
-            #     selected_definition = data_classes[item]
-            #     definitions_output += f"<strong>{item}:</strong> {selected_definition}<br>"
-            #
-            # # Display the button and hover effect
-            # st.markdown(
-            #     f"""
-            #     <style>
-            #         .tooltip {{
-            #             display: inline-block;
-            #             position: relative;
-            #             cursor: pointer;
-            #         }}
-            #
-            #         .tooltip .tooltiptext {{
-            #             visibility: hidden;
-            #             width: 600px;
-            #             background-color: rgba(211, 211, 211, 0.8);
-            #             color: black;
-            #             text-align: left;
-            #             border-radius: 5px;
-            #             padding: 5px;
-            #             position: absolute;
-            #             z-index: 1;
-            #             bottom: 125%; /* Position the tooltip above the button */
-            #             left: 50%;
-            #             margin-left: -100px; /* Center the tooltip */
-            #             transition: visibility 0.2s ease-in-out, opacity 0.2s ease-in-out;
-            #             opacity: 0;
-            #         }}
-            #
-            #         .tooltip:hover .tooltiptext {{
-            #             visibility: visible;
-            #             opacity: 1;
-            #         }}
-            #     </style>
-            #
-            #     <div class="tooltip">
-            #         <button style='border: none; background-color: darkgrey; color: black; border-radius: 20px;padding: 5px 15px;cursor: pointer;'>i</button>
-            #         <div class="tooltiptext">
-            #             {definitions_output}
-            #         </div>
-            #     </div>
-            #     """,
-            #     unsafe_allow_html=True
-            # )
-
-        #
-        # # Create input fields for internet_facing and authentication
-        #     internet_facing = st.selectbox(
-        #         label="Is the application internet-facing?",
-        #         options=["Yes", "No"],
-        #         key="internet_facing",
-        #     )
-
+                    )
+            
             # Create input fields for internet_facing and authentication
             internet_facing = st.selectbox(
                 label="What type of access does the application have?",
