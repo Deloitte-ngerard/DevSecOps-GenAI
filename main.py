@@ -17,6 +17,15 @@ from test_cases import create_test_cases_prompt, get_test_cases, get_test_cases_
 from dread import create_dread_assessment_prompt, get_dread_assessment, get_dread_assessment_azure, get_dread_assessment_google, get_dread_assessment_mistral, get_dread_assessment_ollama, dread_json_to_markdown
 
 # ------------------ Helper Functions ------------------ #
+def load_css():
+    try:
+        with open("style.css") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.error("CSS file not found. Please ensure style.css is in the same directory as your script.")
+
+# Call the function to load the CSS
+
 
 # Function to get user input for the application description and key details
 def get_input():
@@ -81,18 +90,18 @@ def analyze_github_repo(repo_url):
         elif file.type == "blob" and file.path.endswith(('.py', '.js', '.ts', '.html', '.css', '.java', '.go', '.rb')):
             content = repo.get_contents(file.path, ref=default_branch)
             decoded_content = base64.b64decode(content.content).decode()
-            
+
             # Summarize the file content
             summary = summarize_file(file.path, decoded_content)
             file_summaries[file.path.split('.')[-1]].append(summary)
-            
+
             total_chars += len(summary)
             if total_chars > char_limit:
                 break
 
     # Compile the analysis into a system description
     system_description = f"Repository: {repo_url}\n\n"
-    
+
     if readme_content:
         system_description += "README.md Content:\n"
         # Truncate README if it's too long
@@ -145,7 +154,7 @@ def load_env_variables():
     # Try to load from .env file
     if os.path.exists('.env'):
         load_dotenv('.env')
-    
+
     # Load GitHub API key from environment variable
     github_api_key = os.getenv('GITHUB_API_KEY')
     if github_api_key:
@@ -209,7 +218,7 @@ with st.sidebar:
         """
     1. Enter your [OpenAI API key](https://platform.openai.com/account/api-keys) and chosen model below
     2. Choose the Activity you would like to perform.
-    3. For Threat Modeling: Provide details of the application that you would like to threat model 
+    3. For Threat Modeling: Provide details of the application that you would like to threat model
     3. Generate a threat list, attack tree and/or mitigating controls for your application
     4. For AST results analysis, enter the scan results along with the application details.
     """
@@ -250,7 +259,7 @@ with st.sidebar:
         )
         if azure_api_key:
             st.session_state['azure_api_key'] = azure_api_key
-        
+
         # Add Azure OpenAI endpoint input field to the sidebar
         azure_api_endpoint = st.text_input(
             "Azure OpenAI endpoint:",
@@ -267,7 +276,7 @@ with st.sidebar:
         )
         if azure_deployment_name:
             st.session_state['azure_deployment_name'] = azure_deployment_name
-        
+
         st.info("Please note that you must use an 1106-preview model deployment.")
 
         azure_api_version = '2023-12-01-preview' # Update this as needed
@@ -332,7 +341,7 @@ with st.sidebar:
         except requests.exceptions.RequestException as e:
             st.error("Ollama endpoint not found, please select a different model provider.")
             response = None
-        
+
         if response:
             data = response.json()
             available_models = [model["name"] for model in data["models"]]
@@ -421,11 +430,11 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(["Threat Model", "Attack Tree", "Mitigati
 
 with tab1:
     st.markdown("""
-A threat model helps identify and evaluate potential security threats to applications / systems. It provides a systematic approach to 
+A threat model helps identify and evaluate potential security threats to applications / systems. It provides a systematic approach to
 understanding possible vulnerabilities and attack vectors. Use this tab to generate a threat model using the STRIDE methodology.
 """)
     st.markdown("""---""")
-    
+
     # Two column layout for the main app content
     col1, col2 = st.columns([1, 1])
 
@@ -494,25 +503,103 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
                 key="app_type",
             )
 
+            # sensitive_data = st.selectbox(
+            #     label="What is the highest sensitivity level of the data processed by the application?",
+            #     options=[
+            #         "Top Secret",
+            #         "Secret",
+            #         "Confidential",
+            #         "Restricted",
+            #         "Unclassified",
+            #         "None",
+            #     ],
+            #     key="sensitive_data",
+            # )
+            import streamlit as st
+
+            # Sensitivity levels
+            sensitivity_levels = {
+                "Highly Sensitive": "Data that could cause severe damage to national security or individual privacy if disclosed.",
+                "Moderately Sensitive": "Data that could cause moderate damage to national security or individual privacy if disclosed.",
+                "Sensitive": "Data that requires protection due to privacy concerns but may not pose severe risks if exposed.",
+                "Low Sensitivity": "Data that does not require strict protection measures and poses minimal risk if disclosed.",
+                "Public": "Data that is openly available and can be disclosed without any risk."
+            }
+
+            # Initialize session state for the sensitivity definitions toggle
+            if 'show_sensitivity_definitions' not in st.session_state:
+                st.session_state.show_sensitivity_definitions = False
+            tooltip_content1 = "<br>".join([f"<strong>{key}:</strong> {value}" for key, value in sensitivity_levels.items()])
+            # Create the selectbox for sensitivity levels
+            col1, col2 = st.columns([100, 2])  # Adjust the ratio as needed
+
             sensitive_data = st.selectbox(
                 label="What is the highest sensitivity level of the data processed by the application?",
-                options=[
-                    "Top Secret",
-                    "Secret",
-                    "Confidential",
-                    "Restricted",
-                    "Unclassified",
-                    "None",
-                ],
+                options=list(sensitivity_levels.keys()),
                 key="sensitive_data",
             )
 
-        # Create input fields for internet_facing and authentication
+            load_css()
+
+            with col2:
+                st.markdown(
+                    f"""
+                    <div class="tooltip">
+                        <span class="round-icon">i</span>
+                        <div class="tooltiptext">
+                            <b>Sensitivity Type:</b><br>
+                            {tooltip_content1}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            col1, col2 = st.columns([100, 2])  # Adjust the ratio as needed
+            data_classes = {
+                f"Personally Identifiable Information (PII)": "Information that can be used to identify an individual, such as name, social security number, or email address.",
+                "Protected Health Information (PHI)": "Any information about health status, provision of healthcare, or payment for healthcare that can be linked to an individual.",
+                "Payment Card Information (PCI)": "Data related to credit card transactions, including card numbers and security codes.",
+                "Sensitive Personal Data": "Data that requires higher levels of protection, such as racial or ethnic origin, political opinions, or biometric data.",
+                "Public Information": "Data that is freely available and does not require any specific protection measures."
+            }
+
+            # Create the multiselect
+            selected_data_classes = st.multiselect(
+                label="Select all data classes processed by the application:",
+                options=list(data_classes.keys()),
+                key="data_classes",
+            )
+            tooltip_content = "<br>".join([f"<strong>{key}:</strong> {value}" for key, value in data_classes.items()])
+            # Display a tooltip with available options
+            with col2:
+                st.markdown(
+                    f"""
+                    <div class="tooltip">
+                        <span class="round-icon">i</span>
+                        <div class="tooltiptext">
+                            Data Classification:<br>
+                            {tooltip_content}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+
+                    )
+            
+            # Create input fields for internet_facing and authentication
             internet_facing = st.selectbox(
-                label="Is the application internet-facing?",
-                options=["Yes", "No"],
+                label="What type of access does the application have?",
+                options=[
+                    "Public (no auth)",
+                    "Internet Accessible",
+                    "Internal Network",
+                    "Segmented Network",
+                    "Local Access Only"
+                ],
                 key="internet_facing",
             )
+
 
             authentication = st.multiselect(
                 "What authentication methods are supported by the application?",
@@ -520,7 +607,30 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
                 key="authentication",
             )
 
+            # Create input fields for deployment infrastructure
+            deployment_infra = st.selectbox(
+                label="What is the deployment infrastructure?",
+                options=[
+                    "Functionless",
+                    "Containerized",
+                    "Virtual Machines (VMs)",
+                    "On-Premises",
+                    "Hybrid",
+                    "Serverless"
+                ],
+                key="deployment_infra",
+            )
 
+            # Create input fields for data storage location
+            data_storage_location = st.selectbox(
+                label="Where is the data stored?",
+                options=[
+                    "Cloud",
+                    "On-Premises",
+                    "Hybrid",
+                ],
+                key="data_storage_location",
+            )
 
     # ------------------ Threat Model Generation ------------------ #
 
@@ -531,7 +641,7 @@ understanding possible vulnerabilities and attack vectors. Use this tab to gener
     if threat_model_submit_button and st.session_state.get('app_input'):
         app_input = st.session_state['app_input']  # Retrieve from session state
         # Generate the prompt using the create_prompt function
-        threat_model_prompt = create_threat_model_prompt(app_type, authentication, internet_facing, sensitive_data, app_input)
+        threat_model_prompt = create_threat_model_prompt(app_type, authentication, internet_facing, sensitive_data, app_input,selected_data_classes,deployment_infra,data_storage_location)
 
         # Show a spinner while generating the threat model
         with st.spinner("Analysing potential threats..."):
@@ -591,8 +701,8 @@ if threat_model_submit_button and not st.session_state.get('app_input'):
 
 with tab2:
     st.markdown("""
-Attack trees are a structured way to analyse the security of a system. They represent potential attack scenarios in a hierarchical format, 
-with the ultimate goal of an attacker at the root and various paths to achieve that goal as branches. This helps in understanding system 
+Attack trees are a structured way to analyse the security of a system. They represent potential attack scenarios in a hierarchical format,
+with the ultimate goal of an attacker at the root and various paths to achieve that goal as branches. This helps in understanding system
 vulnerabilities and prioritising mitigation efforts.
 """)
     st.markdown("""---""")
@@ -603,10 +713,10 @@ vulnerabilities and prioritising mitigation efforts.
     else:
         if model_provider == "Ollama":
             st.warning("⚠️ Users are likely to encounter syntax errors when generating attack trees using local LLMs. Experiment with different local LLMs to assess their output quality, or consider using a hosted model provider to generate attack trees.")
-        
+
         # Create a submit button for Attack Tree
         attack_tree_submit_button = st.button(label="Generate Attack Tree")
-        
+
         # If the Generate Attack Tree button is clicked and the user has provided an application description
         if attack_tree_submit_button and attack_tree_submit_button.get('app_input'):
             app_input = attack_tree_submit_button.get('app_input')
@@ -633,10 +743,10 @@ vulnerabilities and prioritising mitigation efforts.
                     # Visualise the attack tree using the Mermaid custom component
                     st.write("Attack Tree Diagram Preview:")
                     mermaid(mermaid_code)
-                    
+
                     col1, col2, col3, col4, col5 = st.columns([1,1,1,1,1])
-                    
-                    with col1:              
+
+                    with col1:
                         # Add a button to allow the user to download the Mermaid code
                         st.download_button(
                             label="Download Diagram Code",
@@ -649,15 +759,15 @@ vulnerabilities and prioritising mitigation efforts.
                     with col2:
                         # Add a button to allow the user to open the Mermaid Live editor
                         mermaid_live_button = st.link_button("Open Mermaid Live", "https://mermaid.live")
-                    
+
                     with col3:
                         # Blank placeholder
                         st.write("")
-                    
+
                     with col4:
                         # Blank placeholder
                         st.write("")
-                    
+
                     with col5:
                         # Blank placeholder
                         st.write("")
@@ -685,14 +795,16 @@ Reproducibility – how easy is it to reproduce the attack?
 Exploitability – how much work is it to launch the attack?
 Affected users – how many people will be impacted?
 Discoverability – how easy is it to discover the threat?.
-                
+
 ***You must generate the threat model before you can perform the DREAD Assessment***
 """)
+if 'threat_model' not in st.session_state:
+    st.session_state['threat_model'] = None
 
 if st.session_state['threat_model']:
     # Create a submit button for DREAD
     dread_submit_button = st.button(label="Generate DREAD Risks")
-    
+
     # If the Generate DREAD Risks button is clicked and the user has already run the threat model
     if dread_submit_button and st.session_state['threat_model']:
         dread_input = st.session_state['threat_model']
@@ -735,6 +847,6 @@ if st.session_state['threat_model']:
 with tab5:
     st.markdown("""
 Use this tab to help analyze the output of various Application Security Testing (AST) tools. These uploaded results should be in a standardized
-format such as SARIF for static code analysis, XML, JSON or YAML. This will analyze the results with the context of the application provided 
+format such as SARIF for static code analysis, XML, JSON or YAML. This will analyze the results with the context of the application provided
 previously to provide a summary of each vulnerability in non-technical terms, an adjusted risk score, and a proposed mitigation strategy.
 """)

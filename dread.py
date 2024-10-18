@@ -21,10 +21,10 @@ def dread_json_to_markdown(dread_assessment):
                 exploitability = threat.get('Exploitability', 0)
                 affected_users = threat.get('Affected Users', 0)
                 discoverability = threat.get('Discoverability', 0)
-                
+
                 # Calculate the Risk Score
                 risk_score = (damage_potential + reproducibility + exploitability + affected_users + discoverability) / 5
-                
+
                 markdown_output += f"| {threat.get('Threat Type', 'N/A')} | {threat.get('Scenario', 'N/A')} | {damage_potential} | {reproducibility} | {exploitability} | {affected_users} | {discoverability} | {risk_score:.2f} |\n"
             else:
                 raise TypeError(f"Expected a dictionary, got {type(threat)}: {threat}")
@@ -91,14 +91,14 @@ def get_dread_assessment(api_key, model_name, prompt):
             {"role": "user", "content": prompt}
         ]
     )
-    
+
     # Convert the JSON string in the 'content' field to a Python dictionary
     try:
         dread_assessment = json.loads(response.choices[0].message.content)
     except json.JSONDecodeError as e:
         st.write(f"JSON decoding error: {e}")
         dread_assessment = {}
-    
+
     return dread_assessment
 
 # Function to get DREAD risk assessment from the Azure OpenAI response.
@@ -124,32 +124,32 @@ def get_dread_assessment_azure(azure_api_endpoint, azure_api_key, azure_api_vers
     except json.JSONDecodeError as e:
         st.write(f"JSON decoding error: {e}")
         dread_assessment = {}
-    
+
     return dread_assessment
 
 # Function to get DREAD risk assessment from the Google model's response.
 def get_dread_assessment_google(google_api_key, google_model, prompt):
     genai.configure(api_key=google_api_key)
-    
+
     model = genai.GenerativeModel(google_model)
-    
+
     # Create the system message
     system_message = "You are a helpful assistant designed to output JSON. Only provide the DREAD risk assessment in JSON format with no additional text. Do not wrap the output in a code block."
-    
+
     # Start a chat session with the system message in the history
     chat = model.start_chat(history=[
         {"role": "user", "parts": [system_message]},
         {"role": "model", "parts": ["Understood. I will provide DREAD risk assessments in JSON format only and will not wrap the output in a code block."]}
     ])
-    
+
     # Send the actual prompt
     response = chat.send_message(
-        prompt, 
+        prompt,
         safety_settings={
             'DANGEROUS': 'block_only_high' # Set safety filter to allow generation of DREAD risk assessments
         })
     print(response)
-    
+
     try:
         # Access the JSON content from the response
         dread_assessment = json.loads(response.text)
@@ -188,6 +188,9 @@ def get_dread_assessment_ollama(ollama_model, prompt):
     url = "http://localhost:11434/api/chat"
     max_retries = 3
     retry_delay = 2  # seconds
+    if not isinstance(prompt, str):
+        st.error("Prompt should be a string.")
+        return {}
 
     for attempt in range(1, max_retries + 1):
         data = {
@@ -195,7 +198,7 @@ def get_dread_assessment_ollama(ollama_model, prompt):
             "stream": False,
             "messages": [
                 {
-                    "role": "system", 
+                    "role": "system",
                     "content": "You are a helpful assistant designed to output JSON. Only provide the DREAD risk assessment in JSON format with no additional text."
                 },
                 {
@@ -205,22 +208,27 @@ def get_dread_assessment_ollama(ollama_model, prompt):
                 }
             ]
         }
-        
+
         try:
             response = requests.post(url, json=data)
+            response.raise_for_status()  # Check for HTTP errors
             outer_json = response.json()
-            response_content = outer_json["message"]["content"]
+            response_content = outer_json.get("message", {}).get("content", "")  # Safely access content
 
             # Attempt to parse JSON
             dread_assessment = json.loads(response_content)
             return dread_assessment
+        except requests.exceptions.HTTPError as http_err:
+             st.error(f"Attempt {attempt}: HTTP error occurred: {http_err}")
+             print(f"HTTP error occurred: {http_err}")
+             print(f"Response: {response.text}")  # Log the full response
 
         except json.JSONDecodeError as e:
             st.error(f"Attempt {attempt}: Error decoding JSON. Retrying...")
             print(f"Error decoding JSON: {str(e)}")
             print("Raw JSON string:")
             print(response_content)
-            
+
             if attempt < max_retries:
                 time.sleep(retry_delay)
             else:

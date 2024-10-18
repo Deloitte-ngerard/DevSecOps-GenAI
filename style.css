@@ -1,0 +1,41 @@
+.tooltip {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 500px;
+    background-color: rgba(211, 211, 211, 0.8);
+    color: black;
+    font-size: 10px;
+    text-align: left;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    right: 100%;
+    margin-left: 10px; /* Center the tooltip */
+    transition: visibility 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    opacity: 0;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+.round-icon {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: darkgrey;
+    color: black;
+    text-align: center;
+    line-height: 15px; /* Center text vertically */
+    font-weight: bold;
+    cursor: pointer;
+}
