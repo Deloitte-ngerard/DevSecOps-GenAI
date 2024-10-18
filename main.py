@@ -6,7 +6,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 from github import Github
 from collections import defaultdict
-import tkinter as tk
 import re
 import os
 from dotenv import load_dotenv
