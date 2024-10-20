@@ -15,6 +15,7 @@ from attack_tree import create_attack_tree_prompt, get_attack_tree, get_attack_t
 from mitigations import create_mitigations_prompt, get_mitigations, get_mitigations_azure, get_mitigations_google, get_mitigations_mistral, get_mitigations_ollama
 from test_cases import create_test_cases_prompt, get_test_cases, get_test_cases_azure, get_test_cases_google, get_test_cases_mistral, get_test_cases_ollama
 from dread import create_dread_assessment_prompt, get_dread_assessment, get_dread_assessment_azure, get_dread_assessment_google, get_dread_assessment_mistral, get_dread_assessment_ollama, dread_json_to_markdown
+from ast_analysis import create_ast_analysis_prompt, get_ast_analysis, get_ast_analysis_azure, get_ast_analysis_google, get_ast_analysis_mistral, get_ast_analysis_ollama, ast_json_to_markdown
 
 # ------------------ Helper Functions ------------------ #
 def load_css():
@@ -202,7 +203,7 @@ st.set_page_config(
 st.sidebar.image("logo.png")
 
 # Add instructions on how to use the app to the sidebar
-st.sidebar.header("How to use STRIDE GPT")
+st.sidebar.header("Instructions")
 
 with st.sidebar:
     # Add model selection input field to the sidebar
@@ -888,7 +889,7 @@ Discoverability – how easy is it to discover the threat?.
 
                     st.download_button(
                         label="Download DREAD Assessment",
-                        data=dread_results,
+                        data=dread_markdown_output,
                         file_name="DREAD_Assessment.md",
                         mime="text/plain",
                             help="Download the DREAD Assessment output."
@@ -904,3 +905,46 @@ Use this tab to help analyze the output of various Application Security Testing 
 format such as SARIF for static code analysis, XML, JSON or YAML. This will analyze the results with the context of the application provided
 previously to provide a summary of each vulnerability in non-technical terms, an adjusted risk score, and a proposed mitigation strategy.
 """)
+    uploaded_ast_file = st.file_uploader("Upload AST scan results", type=["sarif", "json", "yml", "txt"])
+    ast_submit_button = st.button(label="Generate AST Analysis")
+
+    if uploaded_ast_file is not None and ast_submit_button:
+        if 'uploaded_ast_file' not in st.session_state or st.session_state.uploaded_ast_file != uploaded_ast_file:
+            st.session_state.uploaded_ast_file = uploaded_ast_file
+
+        # If the Generate AST Risks button is clicked and the user as uploaded the AST file
+        if st.session_state['uploaded_ast_file']:
+            ast_input = st.session_state['uploaded_ast_file']
+            # Generate the prompt using the function
+            ast_prompt = create_ast_analysis_prompt(ast_input.read())
+
+            # Show a spinner while generating AST assessment
+            with st.spinner("Generating AST Analysis..."):
+                try:
+                    # Call the relevant get_attack_tree function with the generated prompt
+                    if model_provider == "Azure OpenAI Service":
+                        ast_results = get_ast_analysis_azure(azure_api_endpoint, azure_api_key, azure_api_version, azure_deployment_name, ast_prompt)
+                    elif model_provider == "OpenAI API":
+                        ast_results = get_ast_analysis(openai_api_key, selected_model, ast_prompt)
+                    elif model_provider == "Mistral API":
+                        ast_results = get_ast_analysis_mistral(mistral_api_key, mistral_model, ast_prompt)
+                    elif model_provider == "Ollama":
+                        ast_results = get_ast_analysis_ollama(ollama_model, ast_prompt)
+
+                    # Display the generated AST assessment
+                    st.write("AST Analysis:")
+                    # Convert the AST Analysis JSON to Markdown
+                    ast_markdown_output = ast_json_to_markdown(ast_results)
+
+                    # Display the threat model in Markdown
+                    st.markdown(ast_markdown_output)
+
+                    st.download_button(
+                        label="Download AST Analysis",
+                        data=ast_markdown_output,
+                        file_name="AST_Analysis.md",
+                        mime="text/plain",
+                            help="Download the AST Analysis output."
+                        )
+                except Exception as e:
+                    st.error(f"Error generating AST analysis: {e}")
