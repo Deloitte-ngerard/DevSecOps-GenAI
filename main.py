@@ -889,7 +889,7 @@ Discoverability – how easy is it to discover the threat?.
 
                     st.download_button(
                         label="Download DREAD Assessment",
-                        data=dread_results,
+                        data=dread_markdown_output,
                         file_name="DREAD_Assessment.md",
                         mime="text/plain",
                             help="Download the DREAD Assessment output."
@@ -941,7 +941,7 @@ previously to provide a summary of each vulnerability in non-technical terms, an
 
                     st.download_button(
                         label="Download AST Analysis",
-                        data=ast_results,
+                        data=ast_markdown_output,
                         file_name="AST_Analysis.md",
                         mime="text/plain",
                             help="Download the AST Analysis output."
