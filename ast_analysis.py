@@ -36,13 +36,13 @@ def create_ast_analysis_prompt(report):
 Act as a application security expert with more than 20 years of experience in assessing static application security testing results.
 Your task is to produce a summary of the risk and potential mitigations for the vulnerabilities identified in the following AST report:
 {report}
-When providing the report, use a JSON formatted response with a top-level key "AST Summary" and a list of vulnerabilities, each with the following sub-keys:
+When providing the report, use a JSON formatted response with a top-level key "AST Analysis" and a list of vulnerabilities, each with the following sub-keys:
 - "Vulnerability": A string summarizing the identified defect in easy-to-understand terms.
 - "Severity": A string describing the qualitative risk of the defect, either 'low', 'medium', 'high' or 'critical'.
 - "Mitigation": A string describing a potential fix to remediate the defect identified.
 Ensure the JSON response is correctly formatted and does not contain any additional text. Here is an example of the expected JSON response format:
 {{
-  "AST Summary": [
+  "AST Analysis": [
     {{
       "Vulnerability": "The variable 'username' is directly used to create a database query, which could allow for an attacker to perform unauthorized database queries.",
       "Severity": "High",
