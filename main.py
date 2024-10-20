@@ -852,49 +852,49 @@ Discoverability – how easy is it to discover the threat?.
 
 ***You must generate the threat model before you can perform the DREAD Assessment***
 """)
-if 'threat_model' not in st.session_state:
-    st.session_state['threat_model'] = None
+    if 'threat_model' not in st.session_state:
+        st.session_state['threat_model'] = None
 
-if st.session_state['threat_model']:
-    # Create a submit button for DREAD
-    dread_submit_button = st.button(label="Generate DREAD Risks")
+    if st.session_state['threat_model']:
+        # Create a submit button for DREAD
+        dread_submit_button = st.button(label="Generate DREAD Risks")
 
-    # If the Generate DREAD Risks button is clicked and the user has already run the threat model
-    if dread_submit_button and st.session_state['threat_model']:
-        dread_input = st.session_state['threat_model']
-        # Generate the prompt using the create_attack_tree_prompt function
-        dread_prompt = create_dread_assessment_prompt(dread_input)
+        # If the Generate DREAD Risks button is clicked and the user has already run the threat model
+        if dread_submit_button and st.session_state['threat_model']:
+            dread_input = st.session_state['threat_model']
+            # Generate the prompt using the create_attack_tree_prompt function
+            dread_prompt = create_dread_assessment_prompt(dread_input)
 
-        # Show a spinner while generating DREAD assessment
-        with st.spinner("Generating DREAD assessment..."):
-            try:
-                # Call the relevant get_attack_tree function with the generated prompt
-                if model_provider == "Azure OpenAI Service":
-                    dread_results = get_dread_assessment_azure(azure_api_endpoint, azure_api_key, azure_api_version, azure_deployment_name, dread_prompt)
-                elif model_provider == "OpenAI API":
-                    dread_results = get_dread_assessment(openai_api_key, selected_model, dread_prompt)
-                elif model_provider == "Mistral API":
-                    dread_results = get_dread_assessment_mistral(mistral_api_key, mistral_model, dread_prompt)
-                elif model_provider == "Ollama":
-                    dread_results = get_dread_assessment_ollama(ollama_model, dread_prompt)
+            # Show a spinner while generating DREAD assessment
+            with st.spinner("Generating DREAD assessment..."):
+                try:
+                    # Call the relevant get_attack_tree function with the generated prompt
+                    if model_provider == "Azure OpenAI Service":
+                        dread_results = get_dread_assessment_azure(azure_api_endpoint, azure_api_key, azure_api_version, azure_deployment_name, dread_prompt)
+                    elif model_provider == "OpenAI API":
+                        dread_results = get_dread_assessment(openai_api_key, selected_model, dread_prompt)
+                    elif model_provider == "Mistral API":
+                        dread_results = get_dread_assessment_mistral(mistral_api_key, mistral_model, dread_prompt)
+                    elif model_provider == "Ollama":
+                        dread_results = get_dread_assessment_ollama(ollama_model, dread_prompt)
 
-                # Display the generated DREAD assessment
-                st.write("DREAD Assessment:")
-                # Convert the DREAD JSON to Markdown
-                dread_markdown_output = dread_json_to_markdown(dread_results)
+                    # Display the generated DREAD assessment
+                    st.write("DREAD Assessment:")
+                    # Convert the DREAD JSON to Markdown
+                    dread_markdown_output = dread_json_to_markdown(dread_results)
 
-                # Display the threat model in Markdown
-                st.markdown(dread_markdown_output)
+                    # Display the threat model in Markdown
+                    st.markdown(dread_markdown_output)
 
-                st.download_button(
-                    label="Download DREAD Assessment",
-                    data=dread_results,
-                    file_name="DREAD_Assessment.md",
-                    mime="text/plain",
-                        help="Download the DREAD Assessment output."
-                    )
-            except Exception as e:
-                st.error(f"Error generating DREAD assessment: {e}")
+                    st.download_button(
+                        label="Download DREAD Assessment",
+                        data=dread_results,
+                        file_name="DREAD_Assessment.md",
+                        mime="text/plain",
+                            help="Download the DREAD Assessment output."
+                        )
+                except Exception as e:
+                    st.error(f"Error generating DREAD assessment: {e}")
 
 # ------------------ AST Analysis Generation ------------------ #
 
