@@ -227,7 +227,6 @@ with st.sidebar:
         # Add OpenAI API key input field to the sidebar
         openai_api_key = st.text_input(
             "Enter your OpenAI API key:",
-            value=st.session_state.get('openai_api_key', ''),
             type="password",
             help="You can find your OpenAI API key on the [OpenAI dashboard](https://platform.openai.com/account/api-keys).",
         )
