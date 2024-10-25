@@ -45,7 +45,7 @@ jobs:
           project_id: genai4dso
           image: docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/genai4dso:${{ github.sha }}
           region: us-central1
-          flags: "--port 8501 --allow-unauthenticated"
+          flags: "--update-env-vars=OPENAI_API_KEY=${{ secrets.OPENAI_KEY }} --port 8501 --allow-unauthenticated"
 
       - name: Get Cloud Run Service URL
         run: |
